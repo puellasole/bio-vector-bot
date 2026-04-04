@@ -26,12 +26,14 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	
 	private static final String START = "/start";
 	private static final String STATS = "/stats";
-	private static final String FOURTH = "/4";
+	private static final String SIXTH = "/6";
 	private static final String ELEVENTH = "/11";
 	private static final String TWENTYFIRST = "/21";
+	private static final String TWENTYSECOND = "/22";
 	private static final String FIRSTSECTION = "/first";
 	private static final String SECONDSECTION = "/second";
 	private static final String HELP = "/help";
+	private static final String QUIT = "/quit";
 	
 	//TESTING
 	private static final String TEST = "/test";
@@ -56,9 +58,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		var chatId = update.getMessage().getChatId();
 		var userState = userSessionService.getUserState(chatId);
 		
-		if (userState == UserState.WAITING_FOR_TASK) {
-			//name...
-			//do -1 of message
+		if (userState == UserState.WAITING_FOR_TASK_QUESTION) {
 			String taskNumber = message.substring(1);
         	processTaskExtraction(chatId, taskNumber);
             return;
@@ -79,8 +79,11 @@ public class BioVectorBot extends TelegramLongPollingBot{
 				String userName = update.getMessage().getChat().getFirstName();
 				startCommand(chatId, userName);
 			}
-			case FOURTH -> {
-				fourthCommand(chatId, message);
+			case SIXTH -> {
+				sixthCommand(chatId, message);
+			}
+			case TWENTYSECOND -> {
+				twentySecondCommand(chatId, message);
 			}
 			case STATS -> {
 				statsCommand(chatId);
@@ -88,23 +91,38 @@ public class BioVectorBot extends TelegramLongPollingBot{
 			case TEST -> {
 				testCommand(chatId);
 			}
+			case QUIT -> {
+				quitCommand(chatId);
+			}
 			case HELP -> helpCommand(chatId);
 			default -> unknownCommand(chatId);
 		}
 	}
 	
+	private void twentySecondCommand(Long chatId, String message) {
+		String taskNumber = message.substring(1);
+		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
+		var text = """
+				Отлично! Давай разберём %s задание.
+				Выбери номер задания:
+				/2201 /2202 /2203 /2204 /2205
+				""";
+		var formattedText = String.format(text, taskNumber);
+		sendMessage(chatId, formattedText);
+	}
+
+	private void quitCommand(Long chatId) {
+		userSessionService.setUserState(chatId, UserState.DEFAULT);
+		var text = """
+				Состояние сброшено. Теперь ты можешь выбрать другую задачу.
+				Чтобы вернуться к списку задач нажми /start.
+				""";
+		var formattedText = String.format(text);
+		sendMessage(chatId, formattedText);
+	}
+
 	private void testCommand(Long chatId) {
 		try {
-			/*
-            // Укажите путь к вашей картинке
-            File imageFile = new File("\\images\\6001.png");
-            
-            SendPhoto photo = new SendPhoto(chatId.toString(), new InputFile(imageFile));
-            photo.setCaption("Вот ваша картинка!");
-            
-            execute(photo);
-            System.out.println("Картинка отправлена!");
-            */
 			InputStream imageStream = getClass().getResourceAsStream("/images/6001.png");
 	        
 	        if (imageStream == null) {
@@ -113,6 +131,29 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	        }
 	        
 	        SendPhoto photo = new SendPhoto(chatId.toString(), new InputFile(imageStream, "6001.png"));
+	        photo.setCaption("Вот ваша картинка!");
+	        
+	        execute(photo);
+	        System.out.println("Картинка отправлена!");
+        } catch (TelegramApiException e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+	}
+	
+	private void sendPictureCommand(Long chatId, String taskNumber) {
+		var picturaName = "%s.png";
+		var picturePath = "/images/%s.png";
+		var formattedText = String.format(picturePath, taskNumber);
+		var formattedTextName = String.format(picturaName, taskNumber);
+		try {
+			InputStream imageStream = getClass().getResourceAsStream(formattedText);
+	        
+	        if (imageStream == null) {
+	            System.out.println("Ошибка: файл " + formattedText + "не найден в resources");
+	            return;
+	        }
+	        
+	        SendPhoto photo = new SendPhoto(chatId.toString(), new InputFile(imageStream, formattedTextName));
 	        photo.setCaption("Вот ваша картинка!");
 	        
 	        execute(photo);
@@ -133,23 +174,25 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	    }
 	}
 
-	private void processTaskExtraction(Long chatId, String message) {
+	private void processTaskExtraction(Long chatId, String taskNumber) {
 		try {
-			//get -1 of tasknumber str
-			String taskNumber = message.substring(1);
-			//text of task?
-	        String result = service.getTask(chatId, taskNumber);
+	        String result = service.getTaskQuestion(taskNumber);
+	        sendPictureCommand(chatId, taskNumber);
 	        sendMessage(chatId, result);
+	        userSessionService.setUserState(chatId, UserState.WAITING_FOR_DEEPSEEK_REPLY);
 	    } catch (Exception e) {
 	        sendMessage(chatId, "❌ Ошибка при обработке оправки задачи: " + e.getMessage());
-	    } finally {
 	        userSessionService.clearUserState(chatId);
-	    }
+	    } /*finally {
+	        userSessionService.clearUserState(chatId);
+	        
+	    }*/
+		
 	}
 
 	private void processDeepSeekResponse(Long chatId, String studentAnswer) {
 		try {
-	        String result = service.getFinalFeedback(chatId, studentAnswer);
+	        String result = service.getFinalFeedback(studentAnswer);
 	        sendMessage(chatId, result);
 	    } catch (Exception e) {
 	        sendMessage(chatId, "❌ Ошибка при обработке запроса: " + e.getMessage());
@@ -175,16 +218,13 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		sendMessage(chatId, text);
 	}
 
-	private void fourthCommand(Long chatId, String message) {
-		//состояние 
-		//+мб сменить на такс намба?
-		//-1 от номера??
+	private void sixthCommand(Long chatId, String message) {
 		String taskNumber = message.substring(1);
-		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK);
+		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
 		var text = """
 				Отлично! Давай разберём %s задание.
 				Выбери номер задания:
-				/4001 /4002 /4003 /4004 /4005
+				/6001 /6002 /6003 /6004 /6005
 				""";
 		var formattedText = String.format(text, taskNumber);
 		sendMessage(chatId, formattedText);
@@ -211,6 +251,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 				Дополнительные команды:
 				/help - Справочная информация
 				/stats - Твоя персональная статистика по наградам
+				/quit - Сброс (если передумал(а) решать задачу)
 				""";
 		var formattedText = String.format(text, userName);
 		sendMessage(chatId, formattedText);
@@ -234,6 +275,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		        
 		        /start - Начать работу (выбор заданий)
 		        /stats - Твоя персональная статистика по наградам
+		        /quit - Сброс (не забывай нажимать, если передумаешь решать задачу)
 		        /help - Показать эту справку
 		        
 		        💡 Желаю успехов в учёбе!

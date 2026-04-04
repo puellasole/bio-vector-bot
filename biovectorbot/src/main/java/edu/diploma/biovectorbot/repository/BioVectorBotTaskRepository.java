@@ -5,6 +5,8 @@ import org.springframework.stereotype.Repository;
 
 import edu.diploma.biovectorbot.entities.TaskEntity;
 
+@Repository
 public interface BioVectorBotTaskRepository extends JpaRepository<TaskEntity, Long>{
-
+	
+	TaskEntity findByNumber(Integer number);
 }
