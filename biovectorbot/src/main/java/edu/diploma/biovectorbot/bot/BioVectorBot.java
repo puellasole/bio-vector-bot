@@ -262,6 +262,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	private void sendMessage(Long chatId, String text) {
 		var chatIdStr = String.valueOf(chatId);
 		var sendMessage = new SendMessage(chatIdStr, text);
+		sendMessage.setParseMode("Markdown");
 		try {
 			execute(sendMessage);
 		} catch (TelegramApiException e) {
