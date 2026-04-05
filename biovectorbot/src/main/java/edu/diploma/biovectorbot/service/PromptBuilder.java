@@ -61,6 +61,26 @@ public class PromptBuilder {
         "- Биологической ошибкой считается только то, что противоречит научным данным\n" +
         "- Не считать ошибкой неполные формулировки, если смысл сохранен\n" +
         "- Учитывать синонимичные формулировки биологических терминов\n\n";
+
+    private static final String FIRST_SECTION_FAST_SYSTEM_PROMPT = 
+    	    "Ты — эксперт ЕГЭ по биологии. Проверь задание на установление соответствия (последовательность цифр).\n\n" +
+    	    "У тебя есть:\n" +
+    	    "- текст задания\n" +
+    	    "- эталон правильной последовательности (в скрытом виде)\n" +
+    	    "- ответ ученика\n\n" +
+    	    "ПРАВИЛА:\n" +
+    	    "- Сравни ответ ученика с эталоном.\n" +
+    	    "- Найди, на каких позициях ошибки.\n" +
+    	    "- Определи, какие биологические понятия/процессы ученик перепутал.\n\n" +
+    	    "ФОРМАТ ОТВЕТА:\n" +
+    	    "1. ОШИБКИ В ПОСЛЕДОВАТЕЛЬНОСТИ:\n" +
+    	    "   - Буква X: ученик указал [цифра], правильно [цифра]\n" +
+    	    "2. КАКИЕ ТЕМЫ ПОВТОРИТЬ:\n" +
+    	    "   - [конкретные понятия/процессы]\n" +
+    	    "3. РЕКОМЕНДАЦИИ УЧЕНИКУ:\n" +
+    	    "   - [как запомнить правильные соответствия, логика]\n" +
+    	    "4. КАК НУЖНО БЫЛО РАССУЖДАТЬ:\n" +
+    	    "   - [краткий алгоритм]\n\n";
     
     /**
      * Основной метод для построения полного промпта
@@ -68,22 +88,38 @@ public class PromptBuilder {
     public String buildPrompt(Task task, String studentAnswer) {
         StringBuilder prompt = new StringBuilder();
         
-        // Добавляем системную инструкцию
         prompt.append(FAST_SYSTEM_PROMPT);
         
-        // Добавляем задание
         prompt.append("ЗАДАНИЕ:\n");
         prompt.append(task.getTaskQuestion()).append("\n\n");
         
-        // Добавляем ответ ученика
         prompt.append("ОТВЕТ УЧЕНИКА:\n");
         prompt.append(studentAnswer).append("\n\n");
         
-        // Добавляем ключевые элементы
         prompt.append("КЛЮЧЕВЫЕ ЭЛЕМЕНТЫ ДЛЯ ОЦЕНКИ:\n");
         prompt.append(task.getKeys()).append("\n");
         
         return prompt.toString();
     }
+
+	public String buildFirstSectionPrompt(Task task, String studentAnswer) {
+		StringBuilder prompt = new StringBuilder();
+        
+        prompt.append(FIRST_SECTION_FAST_SYSTEM_PROMPT);
+        
+        prompt.append("ЗАДАНИЕ:\n");
+        prompt.append(task.getTaskQuestion()).append("\n\n");
+        
+        prompt.append("ОТВЕТ УЧЕНИКА:\n");
+        prompt.append(studentAnswer).append("\n\n");
+        
+        prompt.append("ПРАВИЛЬНЫЙ ОТВЕТ:\n");
+        prompt.append(task.getAnswer()).append("\n\n");
+        
+        prompt.append("ПОЯСНЕНИЯ:\n");
+        prompt.append(task.getKeys()).append("\n");
+        
+        return prompt.toString();
+	}
     
 }

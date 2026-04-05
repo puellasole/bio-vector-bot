@@ -2,11 +2,15 @@ package edu.diploma.biovectorbot.service;
 
 import java.io.IOException;
 
+import edu.diploma.biovectorbot.dto.Task;
+
 public interface BioVectorBotService {
 	
+	Task getTask(String taskNumber);
 	String getAwards(Long chatId);
-	String getFinalFeedback(String studentAnswer) throws IOException; //task???
-	String getTaskQuestion(String taskNumber); //text of task 
-	//why chatid???
+	String getFinalFeedback(Long chatId, String studentAnswer, boolean isFirstSectionScenario) throws IOException; //task???
+
+	void updateXpCountForUser(Long chatId, int xpToAdd);
+	boolean checkAnswer(Long chatId, String studentAnswer);
 	
 }

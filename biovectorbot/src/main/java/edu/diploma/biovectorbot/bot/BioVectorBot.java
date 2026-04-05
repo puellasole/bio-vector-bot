@@ -1,7 +1,8 @@
 package edu.diploma.biovectorbot.bot;
 
-import java.io.File;
 import java.io.InputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +16,11 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import edu.diploma.biovectorbot.dto.Task;
 import edu.diploma.biovectorbot.service.BioVectorBotService;
 import edu.diploma.biovectorbot.service.UserSessionService;
 import edu.diploma.biovectorbot.user.UserState;
+import edu.diploma.biovectorbot.utils.AwardConstants;
 
 @Component
 public class BioVectorBot extends TelegramLongPollingBot{
@@ -26,15 +29,11 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	
 	private static final String START = "/start";
 	private static final String STATS = "/stats";
-	private static final String SIXTH = "/6";
-	private static final String ELEVENTH = "/11";
-	private static final String TWENTYFIRST = "/21";
-	private static final String TWENTYSECOND = "/22";
 	private static final String FIRSTSECTION = "/first";
 	private static final String SECONDSECTION = "/second";
 	private static final String HELP = "/help";
 	private static final String QUIT = "/quit";
-	
+		
 	//TESTING
 	private static final String TEST = "/test";
 
@@ -65,7 +64,17 @@ public class BioVectorBot extends TelegramLongPollingBot{
         }
         		
         if (userState == UserState.WAITING_FOR_DEEPSEEK_REPLY) {
-        	processDeepSeekResponse(chatId, message);
+        	boolean isFirstSectionScenario = userSessionService.isFirstSectionScenario(chatId);
+        	if(isFirstSectionScenario) {
+        		if(checkAnswer(chatId,message)) {
+        			userSessionService.clearUserState(chatId);
+        			return;
+        		} else {
+        			processDeepSeekResponse(chatId, message, isFirstSectionScenario);
+        		}
+        	} else {
+        		processDeepSeekResponse(chatId, message, isFirstSectionScenario);
+        	}
             return;
         }
         
@@ -79,17 +88,14 @@ public class BioVectorBot extends TelegramLongPollingBot{
 				String userName = update.getMessage().getChat().getFirstName();
 				startCommand(chatId, userName);
 			}
-			case SIXTH -> {
-				sixthCommand(chatId, message);
+			case FIRSTSECTION -> {
+				firstSectionCommand(chatId);
 			}
-			case TWENTYSECOND -> {
-				twentySecondCommand(chatId, message);
+			case SECONDSECTION -> {
+				secondSectionCommand(chatId);
 			}
 			case STATS -> {
 				statsCommand(chatId);
-			}
-			case TEST -> {
-				testCommand(chatId);
 			}
 			case QUIT -> {
 				quitCommand(chatId);
@@ -99,47 +105,72 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		}
 	}
 	
-	private void twentySecondCommand(Long chatId, String message) {
-		String taskNumber = message.substring(1);
+	private boolean checkAnswer(Long chatId, String studentAnswer) {
+		try {
+			boolean isAnswerRight = service.checkAnswer(chatId, studentAnswer);
+	        if(isAnswerRight) {
+	        	service.updateXpCountForUser(chatId, AwardConstants.FIRST_SECTION_CORRECT_XP);
+	        	String message = String.format("""
+	                    Поздравляю! Ответ верный :) 
+	                    Ты получаешь %d XP ★ 
+	                    /stats - Твоя статистика наград
+	                    """, AwardConstants.FIRST_SECTION_CORRECT_XP);
+	        	sendMessage(chatId, message);
+	        	return true;
+	        }
+		} catch(IllegalStateException e) {
+			sendMessage(chatId, "❌ Ошибка: задание не найдено. Пожалуйста, выберите задачу заново.");
+	        userSessionService.clearUserState(chatId);
+		}
+		
+		return false;
+	}
+
+	private void secondSectionCommand(Long chatId) {
+		userSessionService.setScenario(chatId, false);
 		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
 		var text = """
-				Отлично! Давай разберём %s задание.
+				Отлично! Давай разберём задания второй части.
 				Выбери номер задания:
+				Тип 22. Методология эксперимента
 				/2201 /2202 /2203 /2204 /2205
+				Тип 23. Выводы по результатам эксперимента
+				/2301 /2302 /2303 /2304 /2305
+				Тип 24. Анализ текстовой и графической информации
+				/2401 /2402 /2403 /2404 /2405
+				Тип 25. Человек и многообразие организмов
+				/2501 /2502 /2503 /2504 /2505
 				""";
-		var formattedText = String.format(text, taskNumber);
-		sendMessage(chatId, formattedText);
+		sendMessage(chatId, text);
+	}
+
+	private void firstSectionCommand(Long chatId) {
+		userSessionService.setScenario(chatId, true);
+		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
+		var text = """
+				Отлично! Давай разберём задания первой части.
+				Выбери номер задания:
+				Тип 6. Клетка, организм (установление соответствия)
+				/6001 /6002 /6003 /6004 /6005
+				Тип 11. Многообразие организмов
+				/1101 /1102 /1103 /1104 /1105
+				Тип 18. Экосистемы и присущие ей закономерности
+				/1801 /1802 /1803 /1804 /1805
+				Тип 19. Эволюция живой природы. Экосистема
+				/1901 /1902 /1903 /1904 /1905
+				""";		
+		sendMessage(chatId, text);
 	}
 
 	private void quitCommand(Long chatId) {
-		userSessionService.setUserState(chatId, UserState.DEFAULT);
+		userSessionService.clearUserState(chatId);
 		var text = """
 				Состояние сброшено. Теперь ты можешь выбрать другую задачу.
 				Чтобы вернуться к списку задач нажми /start.
 				""";
-		var formattedText = String.format(text);
-		sendMessage(chatId, formattedText);
+		sendMessage(chatId, text);
 	}
 
-	private void testCommand(Long chatId) {
-		try {
-			InputStream imageStream = getClass().getResourceAsStream("/images/6001.png");
-	        
-	        if (imageStream == null) {
-	            System.out.println("Ошибка: файл /images/6001.png не найден в resources");
-	            return;
-	        }
-	        
-	        SendPhoto photo = new SendPhoto(chatId.toString(), new InputFile(imageStream, "6001.png"));
-	        photo.setCaption("Вот ваша картинка!");
-	        
-	        execute(photo);
-	        System.out.println("Картинка отправлена!");
-        } catch (TelegramApiException e) {
-            System.out.println("Ошибка: " + e.getMessage());
-        }
-	}
-	
 	private void sendPictureCommand(Long chatId, String taskNumber) {
 		var picturaName = "%s.png";
 		var picturePath = "/images/%s.png";
@@ -154,7 +185,6 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	        }
 	        
 	        SendPhoto photo = new SendPhoto(chatId.toString(), new InputFile(imageStream, formattedTextName));
-	        photo.setCaption("Вот ваша картинка!");
 	        
 	        execute(photo);
 	        System.out.println("Картинка отправлена!");
@@ -176,23 +206,32 @@ public class BioVectorBot extends TelegramLongPollingBot{
 
 	private void processTaskExtraction(Long chatId, String taskNumber) {
 		try {
-	        String result = service.getTaskQuestion(taskNumber);
+			Task task = service.getTask(taskNumber);  
+            userSessionService.setUserTask(chatId, task);
+            
+	        String result = task.getTaskQuestion();
 	        sendPictureCommand(chatId, taskNumber);
 	        sendMessage(chatId, result);
 	        userSessionService.setUserState(chatId, UserState.WAITING_FOR_DEEPSEEK_REPLY);
 	    } catch (Exception e) {
-	        sendMessage(chatId, "❌ Ошибка при обработке оправки задачи: " + e.getMessage());
+	        sendMessage(chatId, "❌ Ошибка при обработке отправки задачи: " + e.getMessage());
 	        userSessionService.clearUserState(chatId);
-	    } /*finally {
-	        userSessionService.clearUserState(chatId);
-	        
-	    }*/
+	    } 
 		
 	}
 
-	private void processDeepSeekResponse(Long chatId, String studentAnswer) {
+	private void processDeepSeekResponse(Long chatId, String studentAnswer, boolean isFirstSectionScenario) {
 		try {
-	        String result = service.getFinalFeedback(studentAnswer);
+			String result = service.getFinalFeedback(chatId, studentAnswer, isFirstSectionScenario);
+			
+			if (!isFirstSectionScenario) {
+	            int score = extractScoreFromDeepSeekResponse(result);
+	            int xpEarned = score * AwardConstants.SECOND_SECTION_XP_MULTIPLIER;
+	            service.updateXpCountForUser(chatId, xpEarned);
+	            //weird way to deal with strings
+	            result += String.format("\n\n✨ Ты получаешь %d XP за это задание", xpEarned);
+	        }
+			
 	        sendMessage(chatId, result);
 	    } catch (Exception e) {
 	    	 e.printStackTrace();
@@ -200,6 +239,15 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	    } finally {
 	        userSessionService.clearUserState(chatId);
 	    }
+	}
+	
+	private int extractScoreFromDeepSeekResponse(String response) {
+	    Pattern pattern = Pattern.compile("(?:ИТОГО|ФИНАЛЬНЫЙ РЕЗУЛЬТАТ)\\s*:\\s*(\\d+)");
+	    Matcher matcher = pattern.matcher(response);
+	    if (matcher.find()) {
+	        return Integer.parseInt(matcher.group(1));
+	    }
+	    return 0; 
 	}
 
 	private void statsCommand(Long chatId) {
@@ -219,40 +267,21 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		sendMessage(chatId, text);
 	}
 
-	private void sixthCommand(Long chatId, String message) {
-		String taskNumber = message.substring(1);
-		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
-		var text = """
-				Отлично! Давай разберём %s задание.
-				Выбери номер задания:
-				/6001 /6002 /6003 /6004 /6005
-				""";
-		var formattedText = String.format(text, taskNumber);
-		sendMessage(chatId, formattedText);
-	}
-
 	private void startCommand(Long chatId, String userName) {
 		var text = """
 				Привет, %s!
 				Я твой персональный репетитор по биологии.
-				Выбери какие задания будем решать сегодня: 
+				Выбери задания какой части будем решать сегодня: 
 				
-				ПЕРВАЯ ЧАСТЬ:
-				/6 - [название]
-				/11 - [название]
-				/18
-				/19
-				
-				ВТОРАЯ ЧАСТЬ:
-				/21 - [название]
-				/22 - [название]
-				/23 - [название]
-				/24 - [название]
+				/first - Первая часть
+				/second - Вторая часть
 				
 				Дополнительные команды:
-				/help - Справочная информация
+				/help - Справочная информация и правила пользования
 				/stats - Твоя персональная статистика по наградам
 				/quit - Сброс (если передумал(а) решать задачу)
+				
+				💡 Желаю успехов в учёбе!
 				""";
 		var formattedText = String.format(text, userName);
 		sendMessage(chatId, formattedText);
@@ -279,8 +308,6 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		        /stats - Твоя персональная статистика по наградам
 		        /quit - Сброс (не забывай нажимать, если передумаешь решать задачу)
 		        /help - Показать эту справку
-		        
-		        💡 Желаю успехов в учёбе!
 		        """;
 		sendMessage(chatId, text);
 	}
