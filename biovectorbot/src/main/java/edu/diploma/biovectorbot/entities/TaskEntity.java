@@ -23,7 +23,7 @@ public class TaskEntity {
     @Column(name = "answer", nullable = false)
     private String answer;
     
-    @Column(name = "keys", columnDefinition = "TEXT")
+    @Column(name = "task_keys", columnDefinition = "TEXT")
     private String keys;
     
     @Column(name = "picture_path")
