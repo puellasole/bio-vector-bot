@@ -1,5 +1,7 @@
 package edu.diploma.biovectorbot.config;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -20,6 +22,9 @@ public class BioVectorBotConfiguration {
 	public OkHttpClient okHttpClient() {
 		return new OkHttpClient.Builder()
 				.addInterceptor(log)
+				.connectTimeout(120, TimeUnit.SECONDS)   // ← добавлено
+		        .readTimeout(120, TimeUnit.SECONDS)      // ← 
+		        .writeTimeout(120, TimeUnit.SECONDS)     // ← 
 				.build();
 	}
 	
