@@ -195,6 +195,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	        String result = service.getFinalFeedback(studentAnswer);
 	        sendMessage(chatId, result);
 	    } catch (Exception e) {
+	    	 e.printStackTrace();
 	        sendMessage(chatId, "❌ Ошибка при обработке запроса: " + e.getMessage());
 	    } finally {
 	        userSessionService.clearUserState(chatId);
