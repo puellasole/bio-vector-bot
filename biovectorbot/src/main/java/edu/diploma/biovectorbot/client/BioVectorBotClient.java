@@ -62,6 +62,9 @@ public class BioVectorBotClient {
         ObjectNode root = objectMapper.createObjectNode();
         root.put("model", "deepseek-chat");
         root.put("stream", false);
+        //token and temp limits
+        root.put("max_tokens", 1200);       
+        root.put("temperature", 0.3);
         
         ArrayNode messages = root.putArray("messages");
         
