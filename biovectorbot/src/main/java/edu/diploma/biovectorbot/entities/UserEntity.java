@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 @Table(name = "user")
 public class UserEntity {
 	@Id
-    @Column(name = "chatId")
+    @Column(name = "chat_id")
     private Long chatId;
     
     @Column(name = "xp_cnt", columnDefinition = "int default 0")
