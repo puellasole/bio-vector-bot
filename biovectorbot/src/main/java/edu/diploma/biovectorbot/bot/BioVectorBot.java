@@ -78,11 +78,6 @@ public class BioVectorBot extends TelegramLongPollingBot{
             return;
         }
         
-        if (userState == UserState.WAITING_FOR_AWARDS) {
-        	processAwardsInfo(chatId);
-            return;
-        }
-        
 		switch(message) {
 			case START -> {
 				String userName = update.getMessage().getChat().getFirstName();
@@ -255,9 +250,8 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		var text = """
 				Сейчас отправлю информацию по твоим наградам :)
 				""";
-		var formattedText = String.format(text);
-		sendMessage(chatId, formattedText);
-		
+		sendMessage(chatId, text);
+		processAwardsInfo(chatId);
 	}
 
 	private void unknownCommand(Long chatId) {
