@@ -26,7 +26,10 @@ public class TaskEntity {
     @Column(name = "task_keys", columnDefinition = "TEXT")
     private String keys;
     
-    @Column(name = "picture_path")
+    @Column(name = "check_type")
+    private String checkType;
+
+	@Column(name = "picture_path")
     private String picturePath;
     
     public TaskEntity() {}
@@ -69,6 +72,14 @@ public class TaskEntity {
 
 	public void setKeys(String keys) {
 		this.keys = keys;
+	}
+	
+	public String getCheckType() {
+		return checkType;
+	}
+
+	public void setCheckType(String checkType) {
+		this.checkType = checkType;
 	}
 
 	public String getPicturePath() {

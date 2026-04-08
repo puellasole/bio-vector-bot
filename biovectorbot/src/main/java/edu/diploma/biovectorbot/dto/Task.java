@@ -6,14 +6,16 @@ public class Task {
     private String taskQuestion;
     private String answer;
     private String keys;
+    private String checkType;
     private String picturePath;
 
-	public Task(Integer number, String taskQuestion, String answer, String keys, String picturePath) {
+	public Task(Integer number, String taskQuestion, String answer, String keys, String checkType, String picturePath) {
 		super();
 		this.number = number;
 		this.taskQuestion = taskQuestion;
 		this.answer = answer;
 		this.keys = keys;
+		this.checkType = checkType;
 		this.picturePath = picturePath;
 	}
 
@@ -47,6 +49,14 @@ public class Task {
 
 	public void setKeys(String keys) {
 		this.keys = keys;
+	}
+
+	public String getCheckType() {
+		return checkType;
+	}
+
+	public void setCheckType(String checkType) {
+		this.checkType = checkType;
 	}
 
 	public String getPicturePath() {

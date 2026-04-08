@@ -77,6 +77,7 @@ public class BioVectorBotServiceImpl implements BioVectorBotService {
 				taskEntity.getTaskQuestion(),
 				taskEntity.getAnswer(),
 				taskEntity.getKeys(),
+				taskEntity.getCheckType(),
 				taskEntity.getPicturePath());
 	}
 
