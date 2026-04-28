@@ -33,9 +33,6 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	private static final String SECONDSECTION = "/second";
 	private static final String HELP = "/help";
 	private static final String QUIT = "/quit";
-		
-	//TESTING
-	private static final String TEST = "/test";
 
 	@Autowired
 	private BioVectorBotService service;
@@ -106,8 +103,8 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	        if(isAnswerRight) {
 	        	service.updateXpCountForUser(chatId, AwardConstants.FIRST_SECTION_CORRECT_XP);
 	        	String message = String.format("""
-	                    Поздравляю! Ответ верный :) 
-	                    Ты получаешь %d XP ★ 
+	                    🎉 Поздравляю! Ответ верный ✅ 
+	                    Ты получаешь %d XP 📈 
 	                    /stats - Твоя статистика наград
 	                    """, AwardConstants.FIRST_SECTION_CORRECT_XP);
 	        	sendMessage(chatId, message);
@@ -125,7 +122,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		userSessionService.setScenario(chatId, false);
 		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
 		var text = """
-				Отлично! Давай разберём задания второй части.
+				🎯 Отлично! Давай разберём задания второй части.
 				Выбери номер задания:
 				Тип 22. Методология эксперимента
 				/2201 /2202 /2203 /2204 /2205
@@ -135,6 +132,12 @@ public class BioVectorBot extends TelegramLongPollingBot{
 				/2401 /2402 /2403 /2404 /2405
 				Тип 25. Человек и многообразие организмов
 				/2501 /2502 /2503 /2504 /2505
+				Тип 26. Общебиологические закономерности
+				/2601 /2502 /2503 /2504 /2505
+				Тип 27. Задача по цитологии
+				/2701 /2502 /2503 /2504 /2505
+				Тип 28. Задача по генетике
+				/2801 /2502 /2503 /2504 /2505
 				""";
 		sendMessage(chatId, text);
 	}
@@ -143,12 +146,14 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		userSessionService.setScenario(chatId, true);
 		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
 		var text = """
-				Отлично! Давай разберём задания первой части.
+				🎯 Отлично! Давай разберём задания первой части.
 				Выбери номер задания:
 				Тип 6. Клетка, организм (установление соответствия)
 				/6001 /6002 /6003 /6004 /6005
 				Тип 7. Клетка, организм (множественный выбор)
 				/7001 /7002 /7003 /7004 /7005
+				Тип 8. Клетка, организм (установление последовательности)
+				/8001 /8002 /8003 /8004 /8005
 				Тип 10. Многообразие организмов (установление соответствия)
 				/1001 /1002 /1003 /1004 /1005
 				Тип 11. Многообразие организмов (множественный выбор)
@@ -170,7 +175,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	private void quitCommand(Long chatId) {
 		userSessionService.clearUserState(chatId);
 		var text = """
-				Состояние сброшено. Теперь ты можешь выбрать другую задачу.
+				🔄 Состояние сброшено. Теперь ты можешь выбрать другую задачу.
 				Чтобы вернуться к списку задач нажми /start.
 				""";
 		sendMessage(chatId, text);
@@ -233,7 +238,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	            int score = extractScoreFromDeepSeekResponse(result);
 	            int xpEarned = score * AwardConstants.SECOND_SECTION_XP_MULTIPLIER;
 	            service.updateXpCountForUser(chatId, xpEarned);
-	            //weird way to deal with strings
+	            
 	            result += String.format("\n\n✨ Ты получаешь %d XP за это задание", xpEarned);
 	        }
 			
@@ -258,7 +263,7 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	private void statsCommand(Long chatId) {
 		userSessionService.setUserState(chatId, UserState.WAITING_FOR_AWARDS);
 		var text = """
-				Сейчас отправлю информацию по твоим наградам :)
+				Сейчас отправлю информацию по твоим наградам 🏆🙂
 				""";
 		sendMessage(chatId, text);
 		processAwardsInfo(chatId);
@@ -266,16 +271,17 @@ public class BioVectorBot extends TelegramLongPollingBot{
 
 	private void unknownCommand(Long chatId) {
 		var text = """ 
-				Я не знаю эту команду :(
+				Я не знаю эту команду ☹️
 				""";
 		sendMessage(chatId, text);
 	}
 
 	private void startCommand(Long chatId, String userName) {
 		var text = """
-				Привет, %s!
-				Я твой персональный репетитор по биологии.
-				Выбери задания какой части будем решать сегодня: 
+				Привет, %s! 
+				Я твой персональный репетитор по биологии. 🧬🔬
+				
+				🌱 Выбери задания какой части будем решать сегодня: 
 				
 				/first - Первая часть
 				/second - Вторая часть

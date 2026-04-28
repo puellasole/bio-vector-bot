@@ -7,7 +7,7 @@ import edu.diploma.biovectorbot.dto.Task;
 @Component
 public class PromptBuilder {
 	
-	private static final String FAST_SYSTEM_PROMPT = 
+	private static final String SECOND_SECTION_SYSTEM_PROMPT = 
 		    "Ты — эксперт ЕГЭ по биологии. Проверь ответ ученика по ключевым элементам.\n\n" +
 		    "ПРАВИЛА:\n" +
 		    "- За каждый совпавший ключевой элемент из списка ниже — +1 балл (макс. 3).\n" +
@@ -95,10 +95,10 @@ public class PromptBuilder {
     	    "   - [краткое объяснение, почему порядок именно такой]\n\n" +
     	    "ВАЖНО: Не упоминай, что ты используешь пояснение. Говори от себя как эксперт. Не пиши лишние абзацы. Будь краток.";
     
-    public String buildPrompt(Task task, String studentAnswer) {
+    public String buildSecondSectionPrompt(Task task, String studentAnswer) {
         StringBuilder prompt = new StringBuilder();
         
-        prompt.append(FAST_SYSTEM_PROMPT);
+        prompt.append(SECOND_SECTION_SYSTEM_PROMPT);
         
         prompt.append("ЗАДАНИЕ:\n");
         prompt.append(task.getTaskQuestion()).append("\n\n");

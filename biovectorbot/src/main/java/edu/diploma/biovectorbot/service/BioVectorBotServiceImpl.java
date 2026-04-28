@@ -36,9 +36,9 @@ public class BioVectorBotServiceImpl implements BioVectorBotService {
 	    int xp = user.getXpCnt();
 	    
 	    return String.format("""
-	            🏆 **Твои награды** 🏆
+	            📋 **Твои награды** 📋
 	            
-	            ⭐ **XP очки:** %d
+	            🎖️ **XP очки:** %d
 	            📊 **Статус:** %s
 	            """, 
 	            xp,
@@ -55,13 +55,13 @@ public class BioVectorBotServiceImpl implements BioVectorBotService {
 	@Override
 	public String getFinalFeedback(Long chatId, String studentAnswer, boolean isFirstSectionScenario) throws IOException {
 		String response;
+		String prompt;
 		if(isFirstSectionScenario) {
-			String prompt = promptBuilder.buildFirstSectionPrompt(userSessionService.getUserTask(chatId), studentAnswer);
-			response = client.getChatResponse(prompt);
+			prompt = promptBuilder.buildFirstSectionPrompt(userSessionService.getUserTask(chatId), studentAnswer);
 		} else {
-			String prompt = promptBuilder.buildPrompt(userSessionService.getUserTask(chatId), studentAnswer);
-			response = client.getChatResponse(prompt);
+			prompt = promptBuilder.buildSecondSectionPrompt(userSessionService.getUserTask(chatId), studentAnswer);
 		}
+		response = client.getChatResponse(prompt);
 		return response;
 	}
 
