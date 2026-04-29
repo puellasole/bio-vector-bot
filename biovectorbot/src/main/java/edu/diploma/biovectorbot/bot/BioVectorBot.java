@@ -3,6 +3,8 @@ package edu.diploma.biovectorbot.bot;
 import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,9 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import edu.diploma.biovectorbot.dto.Task;
 import edu.diploma.biovectorbot.service.BioVectorBotService;
@@ -113,7 +118,8 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	                    Ты получаешь %d XP 📈 
 	                    /stats - Твоя статистика наград
 	                    """, AwardConstants.FIRST_SECTION_CORRECT_XP);
-	        	sendMessage(chatId, message);
+	        	//sendMessage(chatId, message);
+	        	sendMessageWithKeyboard(chatId, message, List.of("/stats", "/start", "/first", "/second"));
 	        	return true;
 	        }
 		} catch(IllegalStateException e) {
@@ -146,7 +152,8 @@ public class BioVectorBot extends TelegramLongPollingBot{
 				🧬 Тип 28. Задача по генетике
 				/2801 /2502 /2503 /2504 /2505
 				""";
-		sendMessage(chatId, text);
+		//sendMessage(chatId, text);
+		sendMessageWithKeyboard(chatId, text, List.of("/help", "/quit"));
 	}
 
 	private void firstSectionCommand(Long chatId) {
@@ -173,14 +180,17 @@ public class BioVectorBot extends TelegramLongPollingBot{
 				🐚 Тип 20. Общебиологические закономерности
 				/2001 /2002 /2003 /2004 /2005
 				""";		
-		sendMessage(chatId, text);
+		//sendMessage(chatId, text);
+		sendMessageWithKeyboard(chatId, text, List.of("/help", "/quit"));
 	}
 
 	private void quitCommand(Long chatId) {
 		userSessionService.clearUserState(chatId);
 		var text = """
 				🔄 Состояние сброшено. Теперь ты можешь выбрать другую задачу.
-				Чтобы вернуться к списку задач нажми /start.
+				Чтобы вернуться в начало нажми /start.
+				/first - Вернуться к задачам первой части
+				/second - Вернуться к задачам второй части
 				""";
 		sendMessage(chatId, text);
 	}
@@ -225,7 +235,8 @@ public class BioVectorBot extends TelegramLongPollingBot{
             
 	        String result = task.getTaskQuestion();
 	        sendPictureCommand(chatId, taskNumber);
-	        sendMessage(chatId, result);
+	        //sendMessage(chatId, result);
+	        sendMessageWithKeyboard(chatId, result, List.of("/help", "/quit"));
 	        userSessionService.setUserState(chatId, UserState.WAITING_FOR_DEEPSEEK_REPLY);
 	    } catch (Exception e) {
 	        sendMessage(chatId, "❌ Ошибка при обработке отправки задачи: " + e.getMessage());
@@ -245,8 +256,8 @@ public class BioVectorBot extends TelegramLongPollingBot{
 	            
 	            result += String.format("\n\n✨ Ты получаешь %d XP за это задание", xpEarned);
 	        }
-			
-	        sendMessage(chatId, result);
+			sendMessageWithKeyboard(chatId, result, List.of("/stats", "/start", "/first", "/second"));
+	        //sendMessage(chatId, result);
 	    } catch (Exception e) {
 	    	 e.printStackTrace();
 	        sendMessage(chatId, "❌ Ошибка при обработке запроса: " + e.getMessage());
@@ -338,6 +349,35 @@ public class BioVectorBot extends TelegramLongPollingBot{
 				/help - Показать эту справку
 		        """;
 		sendMessage(chatId, text);
+	}
+	
+	private void sendMessageWithKeyboard(Long chatId, String text, List<String> buttons) {
+	    var chatIdStr = String.valueOf(chatId);
+	    var sendMessage = new SendMessage(chatIdStr, text);
+	    sendMessage.setParseMode("Markdown");
+	    
+	    ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+	    keyboard.setResizeKeyboard(true);
+	    keyboard.setOneTimeKeyboard(false);
+	    
+	    // Создаём ряд с кнопками используя KeyboardRow
+	    KeyboardRow row = new KeyboardRow();
+	    for (String btn : buttons) {
+	        row.add(new KeyboardButton(btn));
+	    }
+	    
+	    // Добавляем ряд в клавиатуру
+	    List<KeyboardRow> keyboardRows = new ArrayList<>();
+	    keyboardRows.add(row);
+	    keyboard.setKeyboard(keyboardRows);
+	    
+	    sendMessage.setReplyMarkup(keyboard);
+	    
+	    try {
+	        execute(sendMessage);
+	    } catch (TelegramApiException e) {
+	        log.error("Failed sending message with keyboard");
+	    }
 	}
 
 	@Override
