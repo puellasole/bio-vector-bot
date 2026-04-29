@@ -54,6 +54,16 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		var chatId = update.getMessage().getChatId();
 		var userState = userSessionService.getUserState(chatId);
 		
+		if (QUIT.equals(message)) {
+	        quitCommand(chatId);
+	        return;
+	    }
+		
+		if (HELP.equals(message)) {
+			helpCommand(chatId);
+	        return;
+	    }
+		
 		if (userState == UserState.WAITING_FOR_TASK_QUESTION) {
 			String taskNumber = message.substring(1);
         	processTaskExtraction(chatId, taskNumber);
@@ -89,10 +99,6 @@ public class BioVectorBot extends TelegramLongPollingBot{
 			case STATS -> {
 				statsCommand(chatId);
 			}
-			case QUIT -> {
-				quitCommand(chatId);
-			}
-			case HELP -> helpCommand(chatId);
 			default -> unknownCommand(chatId);
 		}
 	}
@@ -123,20 +129,21 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
 		var text = """
 				🎯 Отлично! Давай разберём задания второй части.
+				
 				Выбери номер задания:
-				Тип 22. Методология эксперимента
+				🧪 Тип 22. Методология эксперимента
 				/2201 /2202 /2203 /2204 /2205
-				Тип 23. Выводы по результатам эксперимента
+				📊 Тип 23. Выводы по результатам эксперимента
 				/2301 /2302 /2303 /2304 /2305
-				Тип 24. Анализ текстовой и графической информации
+				📄 Тип 24. Анализ текстовой и графической информации
 				/2401 /2402 /2403 /2404 /2405
-				Тип 25. Человек и многообразие организмов
+				🧍 Тип 25. Человек и многообразие организмов
 				/2501 /2502 /2503 /2504 /2505
-				Тип 26. Общебиологические закономерности
+				🍂 Тип 26. Общебиологические закономерности
 				/2601 /2502 /2503 /2504 /2505
-				Тип 27. Задача по цитологии
+				🔬 Тип 27. Задача по цитологии
 				/2701 /2502 /2503 /2504 /2505
-				Тип 28. Задача по генетике
+				🧬 Тип 28. Задача по генетике
 				/2801 /2502 /2503 /2504 /2505
 				""";
 		sendMessage(chatId, text);
@@ -147,26 +154,23 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		userSessionService.setUserState(chatId, UserState.WAITING_FOR_TASK_QUESTION);
 		var text = """
 				🎯 Отлично! Давай разберём задания первой части.
+				
 				Выбери номер задания:
-				Тип 6. Клетка, организм (установление соответствия)
+				🦠 Тип 6. Клетка, организм (установление соответствия)
 				/6001 /6002 /6003 /6004 /6005
-				Тип 7. Клетка, организм (множественный выбор)
+				🧫 Тип 7. Клетка, организм (множественный выбор)
 				/7001 /7002 /7003 /7004 /7005
-				Тип 8. Клетка, организм (установление последовательности)
+				⚙️ Тип 8. Клетка, организм (установление последовательности)
 				/8001 /8002 /8003 /8004 /8005
-				Тип 10. Многообразие организмов (установление соответствия)
+				🌍 Тип 10. Многообразие организмов (установление соответствия)
 				/1001 /1002 /1003 /1004 /1005
-				Тип 11. Многообразие организмов (множественный выбор)
+				🌿 Тип 11. Многообразие организмов (множественный выбор)
 				/1101 /1102 /1103 /1104 /1105
-				Тип 14. Организм человека
+				🧠 Тип 14. Организм человека
 				/1401 /1402 /1403 /1404 /1405
-				Тип 16. Организм человека и гигиена
+				🩺 Тип 16. Организм человека и гигиена
 				/1601 /1602 /1603 /1604 /1605
-				Тип 18. Экосистемы и присущие ей закономерности
-				/1801 /1802 /1803 /1804 /1805
-				Тип 19. Эволюция живой природы. Экосистема
-				/1901 /1902 /1903 /1904 /1905
-				Тип 20. Общебиологические закономерности
+				🐚 Тип 20. Общебиологические закономерности
 				/2001 /2002 /2003 /2004 /2005
 				""";		
 		sendMessage(chatId, text);
@@ -278,10 +282,10 @@ public class BioVectorBot extends TelegramLongPollingBot{
 
 	private void startCommand(Long chatId, String userName) {
 		var text = """
-				Привет, %s! 
-				Я твой персональный репетитор по биологии. 🧬🔬
+				Привет, %s! ✨
+				Я твой персональный репетитор по биологии. 
 				
-				🌱 Выбери задания какой части будем решать сегодня: 
+				📚 Выбери задания какой части будем решать сегодня: 
 				
 				/first - Первая часть
 				/second - Вторая часть
@@ -295,7 +299,6 @@ public class BioVectorBot extends TelegramLongPollingBot{
 				""";
 		var formattedText = String.format(text, userName);
 		sendMessage(chatId, formattedText);
-		
 	}
 	
 	private void sendMessage(Long chatId, String text) {
@@ -307,11 +310,24 @@ public class BioVectorBot extends TelegramLongPollingBot{
 		} catch (TelegramApiException e) {
 			log.error("Failed sending message");
 		}
-		
 	}
 	
 	public void helpCommand(Long chatId) {
 		String text = """
+				📋 Справка по использованию бота:
+				
+				🧠 Как работать:
+		        1. /start — выбрать первую или вторую часть
+		        2. Выбрать номер задания 
+		        3. Написать ответ на задание
+		        4. Получить разбор и XP
+		        
+		        🔄 Команда /quit:
+		        Сбрасывает текущее задание.
+		        Нужна, если передумал(а) решать или хочешь выбрать другое задание.
+				
+				📌 Важно: после выбора задания бот ждёт только твой ответ.
+				
 		        📖 Помощь по командам:
 		        
 		        /start - Начать работу (выбор заданий)
